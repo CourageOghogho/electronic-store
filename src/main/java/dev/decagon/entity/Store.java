@@ -1,5 +1,7 @@
 package dev.decagon.entity;
 
+import dev.decagon.util.CustomerComparatorByCart;
+
 import java.util.*;
 
 public class Store {
@@ -9,6 +11,9 @@ public class Store {
     private final Set<String> productCategory=new HashSet();
     private final Hashtable<Product,Integer> availableProducts =new Hashtable<>();
     private final List<Staff> employees=new ArrayList<>();
+    private Queue<Customer> salesPriorityQueue=new PriorityQueue<Customer>(
+            100,new CustomerComparatorByCart());
+    private Queue<Customer>salesQueue=new LinkedList<>();
     private final List<Applicant> applicantsPool=new ArrayList<>();
     public Store() {
     }
@@ -17,6 +22,11 @@ public class Store {
         this.name = name;
         this.address = address;
 
+    }
+
+
+    public Queue<Customer> getSalesPriorityQueue() {
+        return salesPriorityQueue;
     }
 
     public String getName() {
@@ -49,5 +59,9 @@ public class Store {
 
     public Hashtable<Product, Integer> getAvailableProducts() {
         return availableProducts;
+    }
+
+    public Queue<Customer> getSalesQueue() {
+        return salesQueue;
     }
 }

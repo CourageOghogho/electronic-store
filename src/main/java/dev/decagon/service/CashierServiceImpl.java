@@ -1,64 +1,75 @@
 package dev.decagon.service;
 
-import dev.decagon.entity.Customer;
-import dev.decagon.entity.Product;
-import dev.decagon.entity.Receipt;
-import dev.decagon.entity.Staff;
+import dev.decagon.entity.*;
 import dev.decagon.exception.InsufficientFundException;
-import dev.decagon.exception.InvalidNumberOfItemsException;
-import dev.decagon.exception.NoSuchProductCategoryExistsException;
 import dev.decagon.exception.ProductOutOfStockException;
 
 import java.util.Hashtable;
-import java.util.Objects;
+import java.util.Map;
+import java.util.Queue;
 
 public class CashierServiceImpl implements CashierService {
-    private Staff cashier;
-    private  Hashtable<Product,Integer> availableProduct;
 
-    private CashierServiceImpl(Staff cashier, Hashtable<Product,Integer> availableProduct){
-        this.cashier=cashier;
-        this.availableProduct=availableProduct;
+    final private  Hashtable<Product,Integer> availableProduct;
+    final private  Store store;
+
+    public CashierServiceImpl(Store store){
+        this.availableProduct=store.getAvailableProducts();
+        this.store=store;
 
     }
 
-    public static CashierServiceImpl cashierService(Staff cashier,Hashtable<Product,Integer> availableProduct){
-        return new CashierServiceImpl(cashier,availableProduct);
-    }
-    public Receipt disSpenceReceipt(Customer customer, Product product, Integer count) {
 
-        Receipt receipt= new Receipt();
+    public Receipt disSpenceReceipt(Customer customer,double totalCost){
+        Receipt receipt=  new Receipt();
         receipt.setCustomerName(customer.getName());
-        receipt.setItemName(product.getName());
-        receipt.setNumberOfItem(count);
-        receipt.setUnitCost(product.getPrice());
-        receipt.setMessage("Thanks for patronizing!");
-        receipt.setTotalCost(product.getPrice()*count);
-
+        receipt.setItemName(itemNameFormatter(customer.getCart()));
+        receipt.setMessage("Thanks for coming!");
+        receipt.setTotalCost(totalCost);
         return receipt;
     }
 
+    private String itemNameFormatter(Map<Product,Integer> map){
+        StringBuilder itemName= new StringBuilder();
+        for (Product product: map.keySet()){
+            itemName.append(" ").append(product.getName()).append(" \n");
+        }
+        return itemName.toString();
+    }
+    public void sellParallel(Customer customer){
+        processSales(customer);
+    }
+    public  void sell(Queue<Customer> queue){
+        while (!queue.isEmpty()){
+            Customer customer=queue.poll();
+            processSales(customer);
+        }
 
-    public Receipt sellProduct(Customer customer,Product product,Integer count){
-        if(customer==null || product== null)
-            throw new NullPointerException("Customer or Product is not referenced");
-        if(customer.getWalletBalance()< product.getPrice())
-            throw new InsufficientFundException("Low balance");
-        if(count<1) throw new InvalidNumberOfItemsException("The items cannot be less than one");
-        for (Product item:availableProduct.keySet()
-             ) {
-            if(Objects.equals(item.getName(), product.getName())){
-                if(availableProduct.get(item)>=count){
-                    availableProduct.replace(item,availableProduct.get(item),
-                            availableProduct.get(item)-count);
-                    customer.setWalletBalance(customer.getWalletBalance()-(item.getPrice()*count));
-                    return disSpenceReceipt(customer,product,count);
-                }else {
-                    throw new ProductOutOfStockException("Products available is not sufficient for your order");
-                }
-            }
-        }throw new NoSuchProductCategoryExistsException("Product category not recognised");
+    }
 
+    private void  processSales(Customer customerServing){
+        int itemCount=0;
+        double totalAmount=0.0;
+        for (Product product: customerServing.getCart().keySet()
+        ) {
+            totalAmount+=product.getPrice()*customerServing.getCart().get(product);
+            itemCount+=customerServing.getCart().get(product);
+            if (customerServing.getWalletBalance()<totalAmount)
+                throw new InsufficientFundException("Your current balance if too low for this purchase");
+            if (customerServing.getCart().get(product)>availableProduct.get(product))
+                throw new ProductOutOfStockException("Products no longer available");
+            store.getAvailableProducts().replace(product,
+                    store.getAvailableProducts().get(product),
+                    store.getAvailableProducts().get(product)-customerServing.getCart().get(product)
+                    );
+
+        }
+        customerServing.setWalletBalance(
+                customerServing.getWalletBalance()-totalAmount);
+        customerServing.getCart().clear();
+        Receipt receipt=disSpenceReceipt(customerServing,totalAmount);
+        receipt.setNumberOfItem(itemCount);
+        customerServing.getReceipts().add(receipt);
     }
 
 

@@ -2,6 +2,7 @@ package dev.decagon.entity;
 
 import dev.decagon.enums.Gender;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -9,7 +10,7 @@ public class Customer extends User {
 
     private double walletBalance=00.00;
     private Address address;
-    private List<Product> order;
+    private List<Receipt> receipts=new ArrayList<>();
 
     private Hashtable<Product,Integer> cart=new Hashtable<>();
 
@@ -20,6 +21,7 @@ public class Customer extends User {
         super(name, email, gender);
         this.walletBalance = walletBalance;
         this.address = address;
+
     }
 
     public double getWalletBalance() {
@@ -39,8 +41,21 @@ public class Customer extends User {
 
     }
 
+    public List<Receipt> getReceipts() {
+        return receipts;
+    }
+
     public Hashtable<Product,Integer> getCart() {
         return cart;
     }
 
-   }
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "walletBalance=" + walletBalance +
+                ", address=" + address +
+                ", receipts=" + receipts +
+                ", cart=" + cart +
+                '}';
+    }
+}

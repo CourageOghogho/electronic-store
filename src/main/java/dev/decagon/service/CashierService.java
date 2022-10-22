@@ -1,12 +1,18 @@
 package dev.decagon.service;
 
 import dev.decagon.entity.Customer;
-import dev.decagon.entity.Product;
 import dev.decagon.entity.Receipt;
-import dev.decagon.exception.InsufficientFundException;
+
+import java.util.Queue;
 
 public interface CashierService {
-    public Receipt disSpenceReceipt(Customer customer,Product product, Integer count);
-    public Receipt sellProduct(Customer customer, Product product, Integer count)
-            throws InsufficientFundException, NullPointerException;
+
+   // public Receipt disSpenceReceipt(Order order, Double totalCost);
+
+   // public  Receipt sellProducts(Order order);
+    void sell(Queue<Customer> queue);
+    void sellParallel(Customer customer);
+    Receipt disSpenceReceipt(Customer customer,double totalCost);
+
+
 }
